@@ -11,7 +11,9 @@ import SwiftUI
 struct lab03App: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            
+                ContactList()
+            
         }
     }
 }
