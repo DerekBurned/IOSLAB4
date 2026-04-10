@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ContactFormView: View {
+    @EnvironmentObject var viewModel: ContactsViewModel
     @State private var contactData: ContactData
     @State private var showValidationAlert = false
     @State private var validationMessage = ""
