@@ -9,13 +9,22 @@ import SwiftUI
 
 struct ContactsListView: View {
     // FIX: Match the standardized ViewModel name
-    @EnvironmentObject var viewModel: ContactViewModel
+    @EnvironmentObject var viewModel: ContactsViewModel
     
     @State private var contactToDelete: ContactData? // FIX: Change Contact to ContactData
     @State private var showDeleteAlert = false
-    
+    @AppStorage("totalBackgroundTime") private var totalBackgroundTime: TimeInterval = 0
     var body: some View {
         NavigationStack {
+            if totalBackgroundTime > 0 {
+                                Text("Czas poza aplikacją: \(String(format: "%.1f", totalBackgroundTime)) s")
+                                    .font(.caption)
+                                    .padding(.vertical, 4)
+                                    .padding(.horizontal, 12)
+                                    .background(Color.blue.opacity(0.1))
+                                    .cornerRadius(8)
+                                    .foregroundColor(.blue)
+                            }
             List {
                 // FIX: Use groupedBySurname instead of groupedContacts
                 ForEach(viewModel.groupedBySurname, id: \.letter) { group in

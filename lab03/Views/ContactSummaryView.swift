@@ -7,7 +7,7 @@
 import SwiftUI
 
 struct ContactSummaryView: View {
-    @EnvironmentObject var viewModel: ContactViewModel
+    @EnvironmentObject var viewModel: ContactsViewModel
     let contactData: ContactData
     @Environment(\.dismiss) private var dismiss
 

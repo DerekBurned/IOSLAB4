@@ -16,7 +16,7 @@ import SwiftUI
 
 struct ContactFormView: View {
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var viewModel: ContactViewModel // Upewnij się, że używasz ContactsViewModel
+    @EnvironmentObject var viewModel: ContactsViewModel // Upewnij się, że używasz ContactsViewModel
     
     var contactToEdit: ContactData?
     @State private var errorMessage: String?
@@ -147,7 +147,7 @@ struct ContactFormView: View {
         contact.notificationsEnabled = notificationsEnabled
         
         // Capture the error and trigger the alert!
-        if let validationError = ContactViewModel.validate(contact) {
+        if let validationError = ContactsViewModel.validate(contact) {
             self.errorMessage = validationError
             self.showValidationError = true
             return
@@ -195,5 +195,5 @@ struct FormField: View {
     NavigationStack {
         ContactFormView()
     }
-    .environmentObject(ContactViewModel(store: FileContactStore()))
+    .environmentObject(ContactsViewModel(store: FileContactStore()))
 }

@@ -12,7 +12,7 @@ import Combine
 /// Single source of truth for the contact list screen and all its
 /// children (form, detail, row). Views observe `contacts` and call
 /// the mutation methods — they never touch the store directly.
-final class ContactViewModel: ObservableObject {
+final class ContactsViewModel: ObservableObject {
 
     /// Full in-memory list. Views read this; only the view model writes it.
     @Published private(set) var contacts: [ContactData] = []
