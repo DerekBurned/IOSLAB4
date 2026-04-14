@@ -12,7 +12,7 @@ import Combine
 /// Single source of truth for the contact list screen and all its
 /// children (form, detail, row). Views observe `contacts` and call
 /// the mutation methods — they never touch the store directly.
-final class ContactsViewModel: ObservableObject {
+final class ContactViewModel: ObservableObject {
 
     /// Full in-memory list. Views read this; only the view model writes it.
     @Published private(set) var contacts: [ContactData] = []
@@ -41,15 +41,15 @@ final class ContactsViewModel: ObservableObject {
     }
 
     func delete(_ contact: ContactData) {
-        // TODO: remove by identity + persist()
-        persist()
-    }
+            contacts.removeAll { $0.id == contact.id }
+            persist()
+        }
 
     // MARK: - Derived state
 
     /// Contacts grouped into alphabetical sections by surname initial,
     /// sorted A→Z, with each section internally sorted by surname.
-    @Published (set) var groupedBySurname: [(letter: String, contacts: [ContactData])] {
+    var groupedBySurname: [(letter: String, contacts: [ContactData])] {
             let groups = Dictionary(grouping: contacts) { $0.surnameInitial }
             return groups
                 .map { (letter: $0.key, contacts: $0.value.sorted { $0.surname.localizedCaseInsensitiveCompare($1.surname) == .orderedAscending }) }
@@ -69,11 +69,12 @@ final class ContactsViewModel: ObservableObject {
             if contact.phoneNumber.trimmingCharacters(in: .whitespaces).isEmpty {
                 return "Pole \"Numer telefonu\" jest wymagane."
             }
-            if contact.email.trimmingCharacters(in: .whitespaces).isEmpty {
-                return "Pole \"Email\" jest wymagane."
-            }
-            if !isValidEmail(contact.email) {
-                return "Nieprawidłowy format adresu e-mail."
+            
+            // E-mail is optional, but if it has text, it must be valid
+            if !contact.email.trimmingCharacters(in: .whitespaces).isEmpty {
+                if !isValidEmail(contact.email) {
+                    return "Nieprawidłowy format adresu e-mail."
+                }
             }
             return nil
         }

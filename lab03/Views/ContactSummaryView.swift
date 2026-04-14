@@ -7,7 +7,7 @@
 import SwiftUI
 
 struct ContactSummaryView: View {
-    @EnvironmentObject var viewModel: ContactsViewModel
+    @EnvironmentObject var viewModel: ContactViewModel
     let contactData: ContactData
     @Environment(\.dismiss) private var dismiss
 
@@ -79,7 +79,25 @@ struct ContactSummaryView: View {
         .navigationTitle("Podsumowanie")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
+        .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Zadzwoń") {
+                            makePhoneCall()
+                        }
+                    }
+                }
     }
+    private func makePhoneCall() {
+            // Usuwamy spacje z numeru, np. "+48 123 456 789" -> "+48123456789"
+            let cleanPhoneNumber = contactData.phoneNumber.replacingOccurrences(of: " ", with: "")
+            
+            // Tworzymy URL do aplikacji telefonu
+            if let phoneURL = URL(string: "tel://\(cleanPhoneNumber)"),
+               UIApplication.shared.canOpenURL(phoneURL) {
+                UIApplication.shared.open(phoneURL)
+            }
+        }
+    
 }
 
 #Preview("Summary") {

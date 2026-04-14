@@ -8,17 +8,13 @@
 import SwiftUI
 
 @main
-struct lab03App: App {
-    @StateObject private var viewModel = ContactsViewModel(store:FileContactStore())
+struct ContactsApp: App {
+    @StateObject private var viewModel = ContactViewModel(store: FileContactStore())
+    
     var body: some Scene {
         WindowGroup {
-            ContactList().environmentObject(viewModel)
-            
+            ContactsListView()
+               .environmentObject(viewModel)
         }
-    }
-}
-#Preview{
-    NavigationStack{
-        ContactFormView().environmentObject(ContactsViewModel(store: FileContactStore()))
     }
 }

@@ -5,127 +5,163 @@
 //  Created by Danylo Lukianiuk on 20/03/2026.
 //
 
+//
+//  ContentView.swift
+//  lab03
+//
+//  Created by Danylo Lukianiuk on 20/03/2026.
+//
+
 import SwiftUI
 
 struct ContactFormView: View {
-    @EnvironmentObject var viewModel: ContactsViewModel
-    @State private var contactData: ContactData
-    @State private var showValidationAlert = false
-    @State private var validationMessage = ""
-    @State private var navigateToSummary = false
-
-    init(contactData: ContactData = ContactData()) {
-        _contactData = State(initialValue: contactData)
-    }
-
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var viewModel: ContactViewModel // Upewnij się, że używasz ContactsViewModel
+    
+    var contactToEdit: ContactData?
+    @State private var errorMessage: String?
+    @State private var showValidationError = false
+    
+    // Wymagane pola
+    @State private var firstName = ""
+    @State private var lastName = ""
+    @State private var phoneNumber = ""
+    
+    // Opcjonalne pola
+    @State private var email = ""
+    @State private var address = ""
+    @State private var city = ""
+    @State private var postalCode = ""
+    @State private var birthDate = Date()
+    @State private var gender: ContactData.Gender = .male
+    @State private var notificationsEnabled = false
+    
+    enum Field { case firstName, lastName, phone, email, address, city, postalCode }
+    @FocusState private var focusedField: Field?
+    
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-
-                GroupBox(label: SectionLabel(title: "Dane osobowe", systemImage: "person.fill")) {
-                    VStack(spacing: 12) {
-                        FormField(title: "Imię", placeholder: "Jan Kowalski", text: $contactData.name)
-                        FormField(title: "Imię", placeholder: "Jan Kowalski", text: $contactData.surname)
-                            .keyboardType(.default)
-                        FormField(title: "Numer telefonu", placeholder: "+48 123 456 789", text: $contactData.phoneNumber)
-                            .keyboardType(.phonePad)
-                    }
-                    .padding(.top, 8)
-                }
-
-                GroupBox(label: SectionLabel(title: "Adres", systemImage: "house.fill")) {
-                    VStack(spacing: 12) {
-                        FormField(title: "Ulica", placeholder: "ul. Przykładowa 1", text: $contactData.address)
-                        FormField(title: "Miasto", placeholder: "Warszawa", text: $contactData.city)
-                        FormField(title: "Kod pocztowy", placeholder: "00-000", text: $contactData.postalCode)
-                            .keyboardType(.numbersAndPunctuation)
-                    }
-                    .padding(.top, 8)
-                }
-
-                GroupBox(label: SectionLabel(title: "Data urodzenia", systemImage: "calendar")) {
-                    DatePicker(
-                        "Wybierz datę",
-                        selection: $contactData.birthDate,
-                        in: ...Date(),
-                        displayedComponents: .date
-                    )
-                    .datePickerStyle(.compact)
-                    .environment(\.locale, Locale(identifier: "pl_PL"))
-                    .padding(.top, 8)
-                }
-
-                GroupBox(label: SectionLabel(title: "Płeć", systemImage: "person.2.fill")) {
-                    Picker("Płeć", selection: $contactData.gender) {
-                        ForEach(ContactData.Gender.allCases, id: \.self) { gender in
-                            Text(gender.rawValue).tag(gender)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.top, 8)
-                }
-
-                GroupBox(label: SectionLabel(title: "Preferencje", systemImage: "bell.fill")) {
-                    Toggle("Otrzymuj powiadomienia", isOn: $contactData.notificationsEnabled)
-                        .tint(.blue)
-                        .padding(.top, 8)
-                }
-
-                Button(action: handleNextButton) {
-                    Text("Przejdź dalej")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
-                }
-                .padding(.top, 8)
+        Form {
+            Section(header: Text("Wymagane")) {
+                TextField("Imię", text: $firstName)
+                    .focused($focusedField, equals: .firstName)
+                    .submitLabel(.next)
+                    .onSubmit { focusedField = .lastName }
+                
+                TextField("Nazwisko", text: $lastName)
+                    .focused($focusedField, equals: .lastName)
+                    .submitLabel(.next)
+                    .onSubmit { focusedField = .phone }
+                
+                TextField("Numer telefonu", text: $phoneNumber)
+                    .keyboardType(.phonePad)
+                    .focused($focusedField, equals: .phone)
+                    .submitLabel(.next)
+                    .onSubmit { focusedField = .email }
             }
-            .padding()
+            
+            Section(header: Text("Kontakt i Adres (Opcjonalne)")) {
+                TextField("E-mail", text: $email)
+                    .keyboardType(.emailAddress)
+                    .textInputAutocapitalization(.never)
+                    .focused($focusedField, equals: .email)
+                    .submitLabel(.next)
+                    .onSubmit { focusedField = .address }
+                
+                TextField("Ulica i numer", text: $address)
+                    .focused($focusedField, equals: .address)
+                    .submitLabel(.next)
+                    .onSubmit { focusedField = .city }
+                
+                TextField("Miasto", text: $city)
+                    .focused($focusedField, equals: .city)
+                    .submitLabel(.next)
+                    .onSubmit { focusedField = .postalCode }
+                
+                TextField("Kod pocztowy", text: $postalCode)
+                    .keyboardType(.numbersAndPunctuation)
+                    .focused($focusedField, equals: .postalCode)
+                    .submitLabel(.done)
+                    .onSubmit { focusedField = nil }
+            }
+            
+            Section(header: Text("Pozostałe (Opcjonalne)")) {
+                DatePicker("Data urodzenia", selection: $birthDate, displayedComponents: .date)
+                    // Optional: limit dates to the past
+                    .datePickerStyle(.compact)
+                
+                Picker("Płeć", selection: $gender) {
+                    ForEach(ContactData.Gender.allCases, id: \.self) { genderOption in
+                        Text(genderOption.rawValue).tag(genderOption)
+                    }
+                }
+                
+                Toggle("Włącz powiadomienia", isOn: $notificationsEnabled)
+                    .tint(.blue)
+            }
+            .dismissKeyboardOnTap() // Helper keeps keyboard from blocking pickers/toggles
+            
+            Button(action: saveContact) {
+                Text(contactToEdit == nil ? "Zapisz" : "Zapisz zmiany")
+                    .frame(maxWidth: .infinity)
+                    .bold()
+            }
         }
-        .navigationDestination(isPresented: $navigateToSummary) {
-            ContactSummaryView(contactData: contactData)
+        .navigationTitle(contactToEdit == nil ? "Nowy kontakt" : "Edytuj kontakt")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            if let contact = contactToEdit {
+                firstName = contact.name
+                lastName = contact.surname
+                phoneNumber = contact.phoneNumber
+                email = contact.email
+                address = contact.address
+                city = contact.city
+                postalCode = contact.postalCode
+                birthDate = contact.birthDate
+                gender = contact.gender
+                notificationsEnabled = contact.notificationsEnabled
+            } else {
+                focusedField = .firstName
+            }
         }
-        .navigationTitle("Formularz kontaktowy")
-        .navigationBarTitleDisplayMode(.large)
-        .scrollDismissesKeyboard(.immediately)
-        .alert("Błąd walidacji", isPresented: $showValidationAlert) {
-            Button("OK", role: .cancel) {}
+        .alert("Błąd walidacji", isPresented: $showValidationError) {
+            Button("OK", role: .cancel) { }
         } message: {
-            Text(validationMessage)
+            Text(errorMessage ?? "Wystąpił nieznany błąd.")
         }
     }
-
-    private func handleNextButton() {
-        if let error = validate() {
-            validationMessage = error
-            showValidationAlert = true
+    
+    private func saveContact() {
+        var contact = contactToEdit ?? ContactData()
+        
+        // Zapisujemy wszystkie pola
+        contact.name = firstName
+        contact.surname = lastName
+        contact.phoneNumber = phoneNumber
+        contact.email = email
+        contact.address = address
+        contact.city = city
+        contact.postalCode = postalCode
+        contact.birthDate = birthDate
+        contact.gender = gender
+        contact.notificationsEnabled = notificationsEnabled
+        
+        // Capture the error and trigger the alert!
+        if let validationError = ContactViewModel.validate(contact) {
+            self.errorMessage = validationError
+            self.showValidationError = true
+            return
+        }
+        
+        // If we get past validation, save the contact
+        if contactToEdit != nil {
+            viewModel.update(contact)
         } else {
-            navigateToSummary = true
+            viewModel.add(contact)
         }
-    }
-
-    private func validate() -> String? {
-        if contactData.name.trimmingCharacters(in: .whitespaces).isEmpty {
-            return "Pole \"Imię\" jest wymagane."
-        }
-        if contactData.surname.trimmingCharacters(in: .whitespaces).isEmpty {
-            return "Pole \"Imię\" jest wymagane."
-        }
-        if contactData.phoneNumber.trimmingCharacters(in: .whitespaces).isEmpty {
-            return "Pole \"Numer telefonu\" jest wymagane."
-        }
-        if contactData.address.trimmingCharacters(in: .whitespaces).isEmpty {
-            return "Pole \"Adres\" jest wymagane."
-        }
-        if contactData.city.trimmingCharacters(in: .whitespaces).isEmpty {
-            return "Pole \"Miasto\" jest wymagane."
-        }
-        if contactData.postalCode.trimmingCharacters(in: .whitespaces).isEmpty {
-            return "Pole \"Kod pocztowy\" jest wymagane."
-        }
-        return nil
+        
+        // Go back to the list
+        dismiss()
     }
 }
 
@@ -135,7 +171,7 @@ struct FormField: View {
     let title: String
     let placeholder: String
     @Binding var text: String
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
@@ -159,4 +195,5 @@ struct FormField: View {
     NavigationStack {
         ContactFormView()
     }
+    .environmentObject(ContactViewModel(store: FileContactStore()))
 }
